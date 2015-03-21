@@ -5,7 +5,10 @@
 var jubatus = require("jubatus"),
     lineReader = require('line-reader'),
     async = require('async'),
-    Promise = require('bluebird')
+    fs = require('fs'),
+    byline = require('byline'),
+    Promise = require('bluebird');
+
 
 var config = require('./config.js'),
     concurrency = config.concurrency || 5,
@@ -37,47 +40,79 @@ readLines(trainingFile, trainEachData)
 function readLines(file, lineProcess) {
     var deferred = Promise.defer();
 
-    var q = async.queue(lineProcess, concurrency);
+    //var q = async.queue(lineProcess, concurrency);
 
 
-    lineReader.eachLine(file, lineTreatement)
-        .then(function () {
-            console.log('end of read')
-            q.drain = function () {
-                debug('last trained')
-                deferred.resolve();
-            }
-            deferred.resolve();
-
-        })
-
-    function lineTreatement(line, last, cb) {
-        //console.log('line', line)
-        var task = {name: name, line: line}
-        q.push(task, function (err) {
-            //debug('finished processing ' + task.line);
-        });
-
-        if (last) {
-            console.log('last line')
-        }
-        //console.log('last is now')
+    var stream = fs.createReadStream(file);
+    stream = byline.createStream(stream);
 
 
-        var buffer = function () {
-            //debug('I have ' + q.length() + ' jobs')
-            if (q.length() <= concurrency) {
-                cb()
-            }
-            else {
-                //I have to sleep
-                setTimeout(function () {
-                    buffer()
-                }, bufferTimeOut);
-            }
-        };
-        buffer()
+    var q = async.queue(lineProcess, config.concurrency);
+    q.drain = function () {
+        console.log('all items have been processed');
+        deferred.resolve();
     }
+
+// add some items to the queue
+
+    stream.on('readable', function () {
+        var line;
+        while (null !== (line = stream.read())) {
+            q.push(line.toString());
+        }
+    });
+
+    /*stream.on('readable', function () {
+     var line;
+     line = stream.read()
+
+     while ((line) !== null) {
+     console.log(line.toString())
+     lineProcess(line.toString(), function () {
+     })
+     line = stream.read()
+     }
+     })
+     */
+    /*
+     lineReader.eachLine(file, lineTreatement)
+     .then(function () {
+     console.log('end of read')
+     q.drain = function () {
+     debug('last trained')
+     deferred.resolve();
+     };
+     });
+     */
+    /*
+     function lineTreatement(line, last, cb) {
+     //console.log('line', line)
+     var task = {name: name, line: line}
+     q.push(task, function (err) {
+     //debug('finished processing ' + task.line);
+     });
+
+     if (last) {
+     console.log('last line')
+     }
+     //console.log('last is now')
+
+
+     var buffer = function () {
+     //debug('I have ' + q.length() + ' jobs')
+     if (q.length() <= concurrency) {
+     cb()
+     }
+     else {
+     //I have to sleep
+     setTimeout(function () {
+     buffer()
+     }, bufferTimeOut);
+     }
+     };
+     buffer()
+     }
+     */
 
     return deferred.promise;
 
@@ -104,7 +139,7 @@ function trainEachData(data, cb) {
         catch (e) {
 
         }
-        //debug(data + '============> trained')
+        debug(data + '============> trained')
         cb(result)
     });
 }
@@ -149,7 +184,7 @@ function showResult(mostLikely) {
 
 
 function transformToDataUm(data) {
-    var line = data.line
+    var line = data
     var arrLine = line.split('", "')
     var label = arrLine[0].replace(/"/, '')
     var content = arrLine[1]
@@ -160,7 +195,7 @@ function transformToDataUm(data) {
 
 
 function extractedTestingData(data) {
-    var line = data.line
+    var line = data
     var arrLine = line.split('", "')
     var label = arrLine[0].replace(/"/, '')
     var content = arrLine[1]
