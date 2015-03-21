@@ -1,20 +1,7 @@
-# jubatus example of code
+/**
+ * Created by nicolasbahout on 21/03/15.
+ */
 
-
-## language classification
-
-clone the code
-```
-git clone https://github.com/bahout/jubatus-node-example.git
-```
-
-run npm init
-```
-npm init
-```
-
-edit config.js
-```
 module.exports = {
     jubatus_ip: 'jubatus_ip',
     jubatus_port: 'jubatus_port',
@@ -27,4 +14,3 @@ module.exports = {
      isDebugEnabled: false
      */
 };
-```

@@ -1,0 +1,24 @@
+{
+  "name": "jubatus-node-example",
+  "version": "1.0.0",
+  "description": "example with node of jubatus",
+  "main": "language.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "node",
+    "jubatus",
+    "learning",
+    "machine"
+  ],
+  "author": "nicolas bahout",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^0.9.0",
+    "bluebird": "^2.9.14",
+    "jubatus": "^0.4.2",
+    "line-reader": "^0.2.4",
+    "q": "^1.2.0"
+  }
+}
