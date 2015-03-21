@@ -36,8 +36,20 @@ readLines(trainingFile, trainEachData)
  *************/
 function readLines(file, lineProcess) {
     var deferred = Promise.defer();
-    lineReader.eachLine(file, lineTreatement)
+
     var q = async.queue(lineProcess, concurrency);
+
+
+    lineReader.eachLine(file, lineTreatement)
+        .then(function () {
+            console.log('end of read')
+            q.drain = function () {
+                debug('last trained')
+                deferred.resolve();
+            }
+            deferred.resolve();
+
+        })
 
     function lineTreatement(line, last, cb) {
         //console.log('line', line)
@@ -46,21 +58,19 @@ function readLines(file, lineProcess) {
             //debug('finished processing ' + task.line);
         });
 
-        if (last < concurrency) {
-            q.drain = function () {
-                debug('last trained')
-                deferred.resolve();
-            }
+        if (last) {
+            console.log('last line')
         }
+        //console.log('last is now')
+
 
         var buffer = function () {
-            debug('I have ' + q.length() + ' jobs')
+            //debug('I have ' + q.length() + ' jobs')
             if (q.length() <= concurrency) {
                 cb()
             }
             else {
                 //I have to sleep
-                debug('Too fast')
                 setTimeout(function () {
                     buffer()
                 }, bufferTimeOut);
@@ -86,8 +96,13 @@ function readLines(file, lineProcess) {
 function trainEachData(data, cb) {
     var data = transformToDataUm(data);
     classifier.train(name, data, function (error, result) {
-        if (error) {
-            throw error;
+        try {
+            if (error) {
+                throw error;
+            }
+        }
+        catch (e) {
+
         }
         //debug(data + '============> trained')
         cb(result)
